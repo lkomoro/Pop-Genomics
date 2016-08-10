@@ -1,3 +1,8 @@
+#This script is for QA/QC and basic population structure analyses using the package StrataG (see E. Archer's github for details on this package)
+#This is meant to be a template/example that can be amended for other datasets-currently code matches a hawksbill turtle microsatellite dataset
+#Plan to mutate this into a Markdown that is easier to follow
+
+
 # make sure you have Rtools installed
 if (!require('devtools')) install.packages('devtools')#can comment out if/once you have installed
 # install from GitHub
