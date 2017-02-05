@@ -61,7 +61,7 @@ Alternatively, if you already have been doing StrataG analyses, you would skip s
 So we see that these data are by individual, typically what we'd have in a raw data file. But we may want to instead have summarized data for different graphs or analyses. There are several ways to do this. 
 
 First (and easiest), we can extract the frequencies and proportions from the gtypes object (via the existing StrataG syntax):  
-```{r haplo_StrataG_freq, echo=T}
+```{r haplo_StrataG_freq, echo=T, include=T}
 # Extract Haplotype frequencies from gtypes object:
 hap.freqs <- alleleFreqs(df.g, by.strata = T)$hap
 hap.freqs[, "freq", ]
@@ -108,7 +108,7 @@ print(b)
 **Note:**-In ggplot, you can change the formatting to be almost anything you want, but this can sometimes make the code long and more complex. So if there's an error, it can be challenging to find the source when it's all lumped together. To help with this, I tend to follow the structure of first setting up my plot with the basics to make sure it's working correctly with my data, and then I layer the formatting I want on top of that.
 
 Secondly/Alternatively (e.g., if you are working with other types of data/not in StrataG), we can use the 'count' function in dplyr to create a frequency table of our data:  
-```{r haplo_count_prop, echo=T}
+```{r haplo_count_prop, echo=T, include=T}
 summary.data <- count(df, location, hap, sort=T) 
 head(summary.data)#did it work how you intended?
 #And/or use layered functions and also add a proportional variable:
@@ -134,7 +134,7 @@ For more details on changing aesthetics in ggplot, see [Resources Here][2]
 **Note:** The difference between plotting the counts vs. the proportions doesn't seem that important here, because we have roughly the same sample sizes among groups. But, this can really change the way the data looks if that is not the case so it may be more desirable to show one or the other form.  
 
 ####Now, let's try using some realish data for an extended exercise
-```{r geneticdata_real, echo=T}
+```{r geneticdata_real, echo=T, include=T}
 mtdna <- read.csv('PGdata/mtDNA_freq.csv')
 str(mtdna) #See that the data is in wide format
 
@@ -164,7 +164,7 @@ df.realg <- df2gtypes(mtdna.expanded, ploidy = 1) #make gtypes object
 
 ####Make stacked bar charts:  
 1. StrataG/gtypes option:
-```{r option1_realdata, echo=T}
+```{r option1_realdata, echo=T, include=T}
 
 # Extract Haplotype frequencies from gtypes object:
 hap.freqs.real <- alleleFreqs(df.realg, by.strata = T)$hap
@@ -209,7 +209,7 @@ print(b)
 ```
 
 2. Non-StrataG/gtypes aka normal dataframe option:
-```{r option2_realdata, echo=T}
+```{r option2_realdata, echo=T, include=T}
 a<-ggplot(mtdna.long, 
        aes(x=Location,y=n, fill=haplotype)) + 
   geom_bar(stat='identity') +
