@@ -105,6 +105,7 @@ b <- a + theme_bw() +
   xlab("Location") + ylab("Proportion")
 print(b)
 ```
+**Note:**-In ggplot, you can change the formatting to be almost anything you want, but this can sometimes make the code long and more complex. So if there's an error, it can be challenging to find the source when it's all lumped together. To help with this, I tend to follow the structure of first setting up my plot with the basics to make sure it's working correctly with my data, and then I layer the formatting I want on top of that.
 
 ####Secondly/Alternatively (e.g., if you are working with other types of data/not in StrataG), we can use the 'count' function in dplyr to create a frequency table of our data:  
 ```{r haplo_count_prop, echo=T}
@@ -130,12 +131,11 @@ ggplot(summary.data2,
 ```
 For more details on changing aesthetics in ggplot, see [Resources Here][2]   
 
-
 **Note:** The difference between plotting the counts vs. the proportions doesn't seem that important here, because we have roughly the same sample sizes among groups. But, this can really change the way the data looks if that is not the case so it may be more desirable to show one or the other form.  
 
 ####Now, let's try using some realish data for an extended exercise
 ```{r geneticdata_real, echo=T}
-mtdna <- read.csv('mtDNA_freq.csv')
+mtdna <- read.csv('PGdata/mtDNA_freq.csv')
 str(mtdna) #See that the data is in wide format
 
 mtdna.long<-gather(mtdna,"haplotype","n", 2:9) #'gather' converts wide to long format (this works for the non-gtypes object graph example)
@@ -162,7 +162,8 @@ mtdna.expanded<-dataset.expanded [,c(4,1:2)] #now each row is an observation
 df.realg <- df2gtypes(mtdna.expanded, ploidy = 1) #make gtypes object
 ```
 
-####Make graphics (again, both options of StrataG or regular syntax)
+####Make stacked bar charts:  
+#####1. StrataG/gtypes option:
 ```{r option1_realdata, echo=T}
 
 # Extract Haplotype frequencies from gtypes object:
@@ -207,7 +208,8 @@ b <- a + theme_bw() +
 print(b)
 ```
 
-
+#####1. Non-StrataG/gtypes aka normal dataframe option:
+```{r option2_realdata, echo=T}
 a<-ggplot(mtdna.long, 
        aes(x=Location,y=n, fill=haplotype)) + 
   geom_bar(stat='identity') +
@@ -232,15 +234,66 @@ b <- a + theme_bw() +
 print(b)
 ```
 
+####Next, we may want to look at the Allele Frequencies as part of our data exploration. 
+
+When we have multiple loci with many alleles (e.g., microsatellites), it can be laborious to make the graphs one by one. Faceting is a great option for this scenario, because it allows you to quickly make groups of graphs by a certain factor. Here I again show two examples:
+1. Using raw data in the same style of input data as you would have prepared for StrataG analyses  
+2. Data already in a gtypes object-using data one of the vignettes from the StrataG package  
+```{r MSat_AlleleFreq, echo=T}
+#Option 1: Data already in gtypes object:
+data(msats.g)#dolphin msat data from StrataG vignette 
+msat.freqs <- alleleFreqs(msats.g, by.strata = TRUE)
+msat.freqs <- melt(msat.freqs)
+colnames(msat.freqs) <- c("allele", "type", "Strata", "value", "Locus")
+msat.freqs$allele <- factor(msat.freqs$allele)
+
+ggplot(subset(msat.freqs, type = "freq"), aes(allele, value, fill = Strata)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~ Locus, scales = "free") +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "top",
+    legend.title = element_blank()
+  )
+
+#Option 2: Raw data organized to go into StrataG:
+Msat.Ei.geno <- read.csv("PGdata/EiMsatData020915.csv") 
+Msat.Ei.strata <- read.csv("PGdata/Ei_Msat_strata.csv") #LABID and population from analysis set.
+#Note: here could also circle back to StrataG analysis script and create gtypes object and then use code above
+Msat_Ei<-merge(Msat.Ei.geno,Msat.Ei.strata)
+Msat_Ei_subset<-Msat_Ei[,c(52,2:13)]
+head(Msat_Ei_subset)
+Ei_long<-gather(Msat_Ei_subset,"Locus","allele_ID",2:13)
+head(Ei_long)
+Ei_long2<-Ei_long%>%
+  separate(Locus,into=c("Locus","allele"),sep="_")
+head(Ei_long2)
+hist<-ggplot(Ei_long2,aes(x=allele_ID,fill=Population))+
+  geom_histogram(binwidth = 5)+theme_bw()+
+  theme(axis.text.x  = element_text(angle=70, vjust=0.5,size=10))
+hist#this puts all our Locus together-not what we want
+hist2<-hist+facet_wrap(~Locus,scales="free")#the scales=free is important when have different ranges among groups (as is the case with Msats, etc.)
+#quartz(10,10)#this is for Mac, just pops out a big external graphing window-I find this useful when using two monitors; there is an analagous command for PC
+print(hist2)
+
+#if want to write to file-
+#ppi=300 #define a pixels per inch term
+#png("Figure2.png", 
+#    width=20*ppi, 
+#    height=12*ppi, 
+#    res=ppi) #define your png file
+#hist2
+#dev.off()
+```
 
 
-Next, we may want to make bar charts with error bars for Mixed Stock Analyses (MSA) results.  
+###Next, we may want to make bar charts with error bars for Mixed Stock Analyses (MSA) results.  
 
-In ggplot, you can change the formatting to be almost anything you want, but this can sometimes make the code long and more complex. So if there's an error, it can be challenging to find the source when it's all lumped together. To help with this, I tend to follow the structure of first setting up my plot with the basics to make sure it's working correctly with my data, and then I layer the formatting I want on top of that. 
+Here we are using summary data that would be generated from programs external to R (so not integrated with StrataG); although there may be increasing use of R packages for MSA, so at a later date I may come back and integrate data structure. For now, we'll read in summary data to generate the plots.
 
-So let's first do a simple example.
+So again let's first start with a simple example.
 ```{r mixed_stock, echo = T}
-MSA<-read.csv("data/MSA_Ccar.csv")
+MSA<-read.csv("PGdata/MSA_Ccar.csv")
 str(MSA)
 bar1<-ggplot(MSA, 
              aes(x=Nesting.Stock, y=Mean, fill=Weight ))  +
@@ -265,16 +318,15 @@ bar2<-bar1+ theme(axis.title.x = element_text(face="bold",
                                               vjust=0.5, 
                                               size=12),
                   legend.title = element_blank(), 
-                  legend.position=c(0.07,0.95)) + 
+                  legend.position=c(0.07,0.95)) + #change this according to where you want it
   xlab("Nesting Stock")+ylab("Estimated Contribution")+
   scale_fill_manual(values=c("blue","forestgreen"))
 print(bar2) #change colors, legend positioning etc as desired...
 ```
 
-Now make your own, slight more complex MSA plot (MJ's data)
+Now make your own, slight more complex MSA plot  
 ```{r MJanalysis, echo=TRUE}
-
-MJ<-read.csv("data/MJ_models_combined.csv", header=TRUE)
+MJ<-read.csv("PGdata/MJ_models_combined.csv", header=TRUE)
 str(MJ)
 
 bar1<-ggplot(MJ, aes(x=STOCK,y=MEAN, fill=Model))  +
@@ -312,48 +364,19 @@ print(bar2)
 #dev.off() #stop!
 ```
 
-Finally, we may want to look at the Allele Frequencies as part of our data exploration. When we have multiple loci with many alleles (e.g., microsatellites), it can be laborious to make the graphs one by one. Faceting is a great option for this scenario, because it allows you to quickly make groups of graphs by a certain factor. Here I use the same style of input data as you would have prepared for StrataG analyses.
-```{r MSat_AlleleFreq, echo=T}
-#3. MSat Allele Freq graph####
-Msat.Ei.geno <- read.csv("data/EiMsatData020915.csv") 
-Msat.Ei.strata <- read.csv("data/Ei_Msat_strata.csv") #LABID and population from analysis set.
-Msat_Ei<-merge(Msat.Ei.geno,Msat.Ei.strata)
-Msat_Ei_subset<-Msat_Ei[,c(52,2:13)]
-head(Msat_Ei_subset)
-Ei_long<-gather(Msat_Ei_subset,"Locus","allele_ID",2:13)
-head(Ei_long)
-Ei_long2<-Ei_long%>%
-  separate(Locus,into=c("Locus","allele"),sep="_")
-head(Ei_long2)
-hist<-ggplot(Ei_long2,aes(x=allele_ID,fill=Population))+
-  geom_histogram(binwidth = 5)+theme_bw()+
-  theme(axis.text.x  = element_text(angle=70, vjust=0.5,size=10))
-hist#this puts all our Locus together-not what we want
-hist2<-hist+facet_wrap(~Locus,scales="free")#the scales=free is important when have different ranges among groups (as is the case with Msats, etc.)
-#quartz(10,10)#this is for Mac, just pops out a big external graphing window-I find this useful when using two monitors; there is an analagous command for PC
-print(hist2)
-
-#if want to write to file-
-#ppi=300 #define a pixels per inch term
-#png("Figure2.png", 
-#    width=20*ppi, 
-#    height=12*ppi, 
-#    res=ppi) #define your png file
-#hist2
-#dev.off()
-```
-
+Finally, of course these are just some examples of basic plots one might be interested in for genetic analyses-there are many others that might be of interest depending on system/question
+e.g.,
  ###Mean Heterozygosity by locus
 ```{r graphics, include=TRUE}
-data<-read.csv("EiMSat_2017-02-03_Ho.csv")#change accordingly
+data<-read.csv("PGdata/EiMSat_April_20_Ho.csv")#Heterozygosity data generated in StrataG analysis script-change file name accordingly
+library(plyr)
 data<-rename(data, c("X"="locus", "x"="mean.heterozygosity"))
 head(data)
 #plot the mean.heterozygosity####
-pdf(paste(description, "_mean_Het_by_locus", ".pdf", sep = ""), width = 15, height = 8)
- 
-ggplot(data = data, aes(x = locus, y = mean.heterozygosity)) + geom_point(size=4, shape = 18, fill = "black") + 
-  labs(x = "Locus", y = "Observed Heterozygosity\n") + theme_classic()
-dev.off()
+#pdf(paste(description, "_mean_Het_by_locus", ".pdf", sep = ""), width = 15, height = 8)
+ggplot(data = data, aes(x = locus, y = mean.heterozygosity)) + geom_point(size=6, shape = 23, fill = "red",alpha=0.5) + 
+  labs(x = "Locus", y = "Observed Heterozygosity\n") + theme_classic()+  theme(axis.text.x  = element_text(angle=70, vjust=0.5,size=10))
+#dev.off()
 ```
 
 #Bonus-add in later: mapping
