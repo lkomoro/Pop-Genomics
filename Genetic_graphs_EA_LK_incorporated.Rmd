@@ -7,13 +7,13 @@ output: html_document
 
 *N.B. Work in progress integrating with StrataG Pop Structure script and Eric's new code for making everything compatible with gtypes objects*
 
-##Graphical Exploration of for genetic data  
+##Graphical Exploration for basic population genetic data  
 
 This document covers how to make some plots and manipulate data that are common to genetic analyses. This is a sister script to the population structure script using StrataG, so for most sections I've made 2 options:  
 (1) where code compatible with gtypes objects and other StrataG syntax
 (2) where code is amenable to just normal R dataframe format
 
-### Intro- loading libraries
+### Intro - loading libraries
 First we need to load the libraries if they are not already
 *You may need to install these if they are not already installed*
 [Instructions to do this can be found here][1]
@@ -60,7 +60,7 @@ Alternatively, if you already have been doing StrataG analyses, you would skip s
 
 So we see that these data are by individual, typically what we'd have in a raw data file. But we may want to instead have summarized data for different graphs or analyses. There are several ways to do this. 
 
-####First (and easiest), we can extract the frequencies and proportions from the gtypes object (via the existing StrataG syntax):  
+First (and easiest), we can extract the frequencies and proportions from the gtypes object (via the existing StrataG syntax):  
 ```{r haplo_StrataG_freq, echo=T}
 # Extract Haplotype frequencies from gtypes object:
 hap.freqs <- alleleFreqs(df.g, by.strata = T)$hap
@@ -107,7 +107,7 @@ print(b)
 ```
 **Note:**-In ggplot, you can change the formatting to be almost anything you want, but this can sometimes make the code long and more complex. So if there's an error, it can be challenging to find the source when it's all lumped together. To help with this, I tend to follow the structure of first setting up my plot with the basics to make sure it's working correctly with my data, and then I layer the formatting I want on top of that.
 
-####Secondly/Alternatively (e.g., if you are working with other types of data/not in StrataG), we can use the 'count' function in dplyr to create a frequency table of our data:  
+Secondly/Alternatively (e.g., if you are working with other types of data/not in StrataG), we can use the 'count' function in dplyr to create a frequency table of our data:  
 ```{r haplo_count_prop, echo=T}
 summary.data <- count(df, location, hap, sort=T) 
 head(summary.data)#did it work how you intended?
@@ -163,7 +163,7 @@ df.realg <- df2gtypes(mtdna.expanded, ploidy = 1) #make gtypes object
 ```
 
 ####Make stacked bar charts:  
-#####1. StrataG/gtypes option:
+1. StrataG/gtypes option:
 ```{r option1_realdata, echo=T}
 
 # Extract Haplotype frequencies from gtypes object:
@@ -208,7 +208,7 @@ b <- a + theme_bw() +
 print(b)
 ```
 
-#####1. Non-StrataG/gtypes aka normal dataframe option:
+2. Non-StrataG/gtypes aka normal dataframe option:
 ```{r option2_realdata, echo=T}
 a<-ggplot(mtdna.long, 
        aes(x=Location,y=n, fill=haplotype)) + 
@@ -236,7 +236,8 @@ print(b)
 
 ####Next, we may want to look at the Allele Frequencies as part of our data exploration. 
 
-When we have multiple loci with many alleles (e.g., microsatellites), it can be laborious to make the graphs one by one. Faceting is a great option for this scenario, because it allows you to quickly make groups of graphs by a certain factor. Here I again show two examples:
+When we have multiple loci with many alleles (e.g., microsatellites), it can be laborious to make the graphs one by one. Faceting is a great option for this scenario, because it allows you to quickly make groups of graphs by a certain factor. Here I again show two examples:  
+
 1. Using raw data in the same style of input data as you would have prepared for StrataG analyses  
 2. Data already in a gtypes object-using data one of the vignettes from the StrataG package  
 ```{r MSat_AlleleFreq, echo=T}
@@ -287,7 +288,7 @@ print(hist2)
 ```
 
 
-###Next, we may want to make bar charts with error bars for Mixed Stock Analyses (MSA) results.  
+####Next, we may want to make bar charts with error bars for Mixed Stock Analyses (MSA) results.  
 
 Here we are using summary data that would be generated from programs external to R (so not integrated with StrataG); although there may be increasing use of R packages for MSA, so at a later date I may come back and integrate data structure. For now, we'll read in summary data to generate the plots.
 
@@ -324,7 +325,7 @@ bar2<-bar1+ theme(axis.title.x = element_text(face="bold",
 print(bar2) #change colors, legend positioning etc as desired...
 ```
 
-Now make your own, slight more complex MSA plot  
+Now make your own, slightly more complex MSA plot  
 ```{r MJanalysis, echo=TRUE}
 MJ<-read.csv("PGdata/MJ_models_combined.csv", header=TRUE)
 str(MJ)
@@ -379,7 +380,7 @@ ggplot(data = data, aes(x = locus, y = mean.heterozygosity)) + geom_point(size=6
 #dev.off()
 ```
 
-#Bonus-add in later: mapping
+######Bonus-add in later: mapping
 Show graph of Haplotype Freqs overlaid on map from [tutorial from K. Gilbert] [3] (Could be for future workshop as people advance if people are interested)
 
 [1]:https://www.youtube.com/watch?v=u1r5XTqrCTQ
