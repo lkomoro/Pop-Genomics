@@ -7,15 +7,16 @@ output: html_document
 
 *N.B. Work in progress integrating with StrataG Pop Structure script and Eric's new code for making everything compatible with gtypes objects*
 
-#Graphical Exploration of for genetic data
+##Graphical Exploration of for genetic data  
 
-This document covers how to make some plots and manipulate data that are common to genetic analyses. This is a sister script to the population structure script using StrataG, so I've made the code compatible with gtypes objects and other StrataG syntax.
+This document covers how to make some plots and manipulate data that are common to genetic analyses. This is a sister script to the population structure script using StrataG, so for most sections I've made 2 options:  
+(1) where code compatible with gtypes objects and other StrataG syntax
+(2) where code is amenable to just normal R dataframe format
 
-
-## Intro- loading libraries
+### Intro- loading libraries
 First we need to load the libraries if they are not already
 *You may need to install these if they are not already installed*
-*insert link with instructions about how to install libraries in RStudio*
+[Instructions to do this can be found here][1]
 ```{r haplo_load, echo=T}
 
 rm(list = ls())
@@ -24,15 +25,15 @@ library(ggplot2)
 library(reshape2)
 library(dplyr)
 library(tidyr)
-devtools::install_github('ericarcher/strataG', build_vignettes = TRUE)
+#devtools::install_github('ericarcher/strataG', build_vignettes = TRUE) uncomment and run if need to update StrataG
 ```
 *N.B. You will need to periodically update StrataG from Eric's github which has latest changes-this is what the last line of code above does (this requires an internet connection and devtools to already be installed for this to run correctly)*
 
-##1. Haplotype Allelic Frequency Bar Charts
+###Basic Graphics:  
+####1. Haplotype Allelic Frequency Bar Charts
 
-Then, let's generate data to play with:
+First, let's generate data to play with:
 ```{r haplo_freq, echo=T}
-
 # example data
 set.seed(8) #set the seed number for the random number generator so results are reproducible
 df <- data.frame(
@@ -42,51 +43,35 @@ df <- data.frame(
                  ), 40, rep = TRUE)#randomly pick from above list, 40 times
 )
 ```
+(Obviously, here you can also load your real data here to use)  
 
-Then we can check the structure and summary of our data to make sure it is what we want:
+Then we can check the structure and summary of our data to make sure it is what we want:  
 ```{r haplo_str, echo=T}
 str(df) #examine structure of dataframe
 summary(df) #summary stats of dataframe
 head(df)#first five rows of dataframe
 ```
 
-Once we've checked that our data is ok, we transform into a gtypes object.
-This makes it compatible with analyses in StrataG.  
-Alternatively, if you already have been doing StrataG analyses, you would skip generating the data, and just use your already existing gtypes object.
+Once we've checked that our data is ok, we transform into a gtypes object. This makes it compatible with analyses in StrataG.  
 ```{r haplo_gtpyes, echo=T}
 df.g <- df2gtypes(df, ploidy = 1) # make gtypes object for haplotypic data (the 'ploidy' part-so if you have diploid data, would be ploidy=2)
 ```
+Alternatively, if you already have been doing StrataG analyses, you would skip steps above, and just use your already existing gtypes object.
 
-This data is by individual, typically what we'd have in a raw data file. But we may want to instead have summarized data for different graphs or analyses. There are several ways to do this. First (and easiest), we can extract the frequencies and proportions from the gtypes object (via the existing StrataG syntax):
+So we see that these data are by individual, typically what we'd have in a raw data file. But we may want to instead have summarized data for different graphs or analyses. There are several ways to do this. 
 
+####First (and easiest), we can extract the frequencies and proportions from the gtypes object (via the existing StrataG syntax):  
 ```{r haplo_StrataG_freq, echo=T}
-# Haplotype frequencies:
+# Extract Haplotype frequencies from gtypes object:
 hap.freqs <- alleleFreqs(df.g, by.strata = T)$hap
 hap.freqs[, "freq", ]
 hap.freqs[, "prop", ]
-```
 
-Alternatively (e.g., if you are working with other types of data/not in StrataG), we can use the 'count' function in dplyr to create a frequency table of our data:
-```{r haplo_count, echo=T}
-summary.data <- count(df, location, hap, sort=T) 
-head(summary.data)
-```
+#If you want to do the Reverse- Also, if you had haplotype frequencies, and need to convert the other way to individuals for StrataG, etc., you could convert by:
+freq.df <- freq2GenData(hap.freqs[, "freq", ])
+freq.g <- df2gtypes(freq.df, ploidy = 1)
 
-And then use layered functions that add a proportional variable:
-```{r haplo_prop, echo=T}
-summary.data2<-df %>%
-  group_by(location,hap) %>% #define groups
-  summarize(n=n()) %>%             #summarize counts the occurrences
-  mutate(freq=n/sum(n))            #mutate creates a new variable that we call 'freq' that is the proportion given each group
-head(summary.data2)#did it work how you intended?
-```
-******start here
-Now we can use these summarized data to make stacked bar graphs
-
-
-```{r haplo_stackedbar, echo=T}
-# Plot haplotype frequencies
-#1. Using StrataG/gtypes method:
+# Now we can Plot haplotype frequencies: use these summarized data to make stacked bar graphs
 freq.df <- melt(hap.freqs[, "freq", ])
 colnames(freq.df) <- c("Haplotype", "Location", "Frequency")
 ggplot(freq.df, aes(Location, Frequency, fill = Haplotype)) +
@@ -119,8 +104,20 @@ b <- a + theme_bw() +
   guides(fill=guide_legend(title="Haplotype")) + 
   xlab("Location") + ylab("Proportion")
 print(b)
+```
 
-#2. If used alternate (dplyr code), non-genetic data method, same thing:
+####Secondly/Alternatively (e.g., if you are working with other types of data/not in StrataG), we can use the 'count' function in dplyr to create a frequency table of our data:  
+```{r haplo_count_prop, echo=T}
+summary.data <- count(df, location, hap, sort=T) 
+head(summary.data)#did it work how you intended?
+#And/or use layered functions and also add a proportional variable:
+summary.data2<-df %>%
+  group_by(location,hap) %>% #define groups
+  summarize(n=n()) %>%             #summarize counts the occurrences
+  mutate(freq=n/sum(n))            #mutate creates a new variable that we call 'freq' that is the proportion given each group
+head(summary.data2)#did it work how you intended?
+
+# Now we can Plot haplotype frequencies: use these summarized data to make stacked bar graphs (so this is the general code that works with any type of count/prop data, doesn't have to be genetic haplotypes):
 ggplot(summary.data, 
        aes(x=location,y=n, fill=hap)) + 
   geom_bar(stat='identity') #counts
@@ -129,29 +126,94 @@ ggplot(summary.data2,
        aes(x=location,y=freq, fill=hap)) + 
   geom_bar(stat='identity')#proportions
 
+#use same code above for changing aesthetics to your liking
 ```
-The difference between plotting the counts vs. the proportions doesn't seem that important here, because we have roughly the same sample sizes among groups. But, this can really change the way the data looks if that is not the case so it may be more desirable to show one or the other form.
+For more details on changing aesthetics in ggplot, see [Resources Here][2]   
 
-Also, if you had haplotype frequencies, and need to convert the other way to individuals for StrataG, etc., you could convert:
-```{r haplo_freq_ind, echo=T}
-freq.df <- freq2GenData(hap.freqs[, "freq", ])#this currently doesnt run, but I think I need to update 
-freq.g <- df2gtypes(freq.df, ploidy = 1)
+
+**Note:** The difference between plotting the counts vs. the proportions doesn't seem that important here, because we have roughly the same sample sizes among groups. But, this can really change the way the data looks if that is not the case so it may be more desirable to show one or the other form.  
+
+####Now, let's try using some realish data for an extended exercise
+```{r geneticdata_real, echo=T}
+mtdna <- read.csv('mtDNA_freq.csv')
+str(mtdna) #See that the data is in wide format
+
+mtdna.long<-gather(mtdna,"haplotype","n", 2:9) #'gather' converts wide to long format (this works for the non-gtypes object graph example)
+
+#If we need to create a StrataG gtypes object, we want each row to actually be one sample. Often our raw data is in that format (why we generated the data in the example that way) that then needs to get converted into a frequency table. But, perhaps you made and/or a coauthor sent you a summarized table like we have here and you need to reverse it to get into a gtypes object 
+
+#(I know, this all seems circular, but what I am trying to provide are ways to easily move between data formats, no matter which format you start with)
+
+#So, then we can use some frequency to binomial conversion code:
+dataset<-mtdna.long
+dataset.expanded = dataset[0,]
+for (i in 1:length(dataset$n))
+{
+ if(dataset$n[i]>0)
+ {
+   dataset.add.succ = dataset[rep(i,dataset$n[i]),]
+   dataset.add.succ$n=1
+   #dataset.add.succ$failure=0
+   dataset.expanded=rbind(dataset.expanded, dataset.add.succ)
+ }
+}
+dataset.expanded$id <- 1:nrow(dataset.expanded)#just adding a dummy sample ID column since strataG needs that
+mtdna.expanded<-dataset.expanded [,c(4,1:2)] #now each row is an observation
+df.realg <- df2gtypes(mtdna.expanded, ploidy = 1) #make gtypes object
 ```
 
+####Make graphics (again, both options of StrataG or regular syntax)
+```{r option1_realdata, echo=T}
 
-Now, let's try using some realish data for an extended exercise
-```{r genetic_real, echo=T}
+# Extract Haplotype frequencies from gtypes object:
+hap.freqs.real <- alleleFreqs(df.realg, by.strata = T)$hap
+hap.freqs.real[, "freq", ] #this should look like our original input data (rows/columns reversed)-check, does it?
+hap.freqs.real[, "prop", ]
 
-mtdna <- read.csv('data/mtDNA_freq.csv')
-str(mtdna) #data is in wide format
+freq.real.df <- freq2GenData(hap.freqs.real[, "freq", ])#reverse -to get individuals out of gtypes object if you started there (again, this shoudl be the same as the mtdna.expanded we created above!)
 
-mtdna.long<-gather(mtdna,"haplotype","n", 2:9) #'gather' converts wide to long format
+# Then Plot haplotype frequencies: use these summarized data to make stacked bar graphs
+freq.real.df <- melt(hap.freqs.real[, "freq", ])
+colnames(freq.real.df) <- c("Haplotype", "Location", "Frequency")
+ggplot(freq.real.df, aes(Location, Frequency, fill = Haplotype)) +
+  geom_bar(stat = "identity")
+
+prop.real.df <- melt(hap.freqs.real[, "prop", ])
+colnames(prop.real.df ) <- c("Haplotype", "Location", "Proportion")
+ggplot(prop.real.df , aes(Location, Proportion, fill = Haplotype)) +
+  geom_bar(stat = "identity")
+
+#Can add/change aesthetics:
+a <- ggplot(prop.real.df ,
+            aes(Location, Proportion, fill=Haplotype)) + 
+  geom_bar(stat='identity')
+
+b <- a + theme_bw() + 
+  scale_fill_manual(values=c("blue","forestgreen","grey70","purple","black","orange","yellow","cyan"))+#change to whatever colors float your boat
+  theme(axis.title.x = element_text(face="bold", 
+                                    colour="black", 
+                                    size=20),
+        axis.text.x  = element_text(angle=30, 
+                                    vjust=0.5, 
+                                    size=14),
+        axis.title.y = element_text(face="bold", 
+                                    colour="black", 
+                                    size=20),
+        axis.text.y  = element_text(angle=90, 
+                                    vjust=0.5, 
+                                    size=14)) +
+  guides(fill=guide_legend(title="Haplotype")) + 
+  xlab("Location") + ylab("Proportion")
+print(b)
+```
+
 
 a<-ggplot(mtdna.long, 
        aes(x=Location,y=n, fill=haplotype)) + 
   geom_bar(stat='identity') +
   scale_fill_brewer(palette="Spectral") + 
   theme_bw()#play around with the themes and color scales as you want...
+
 b <- a + theme_bw() + 
   theme(axis.title.x = element_text(face="bold", 
                                     colour="black", 
@@ -295,6 +357,8 @@ dev.off()
 ```
 
 #Bonus-add in later: mapping
-Show graph of Haplotype Freqs overlaid on map from tutorial from K. Gilbert Could be for future workshop as people advance if people are interested
+Show graph of Haplotype Freqs overlaid on map from [tutorial from K. Gilbert] [3] (Could be for future workshop as people advance if people are interested)
 
-
+[1]:https://www.youtube.com/watch?v=u1r5XTqrCTQ
+[2]: http://www.cookbook-r.com/Graphs/
+[3]:http://www.molecularecologist.com/2012/09/making-maps-with-r/
