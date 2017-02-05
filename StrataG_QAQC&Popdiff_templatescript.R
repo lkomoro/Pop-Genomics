@@ -23,7 +23,7 @@ strata <- "Population"  #name of stratum to use in analysis, not really using cu
 
 #read in data ####
 Msat.Ei.geno <- readGenData(genotypes.file) #analysis set export with population column removed
-    #missing genotype must be "NA" (not "0")
+#missing genotype must be "NA" (not "0")
 Msat.Ei.strata <- readGenData(strata.file) #LABID and population from analysis set.
 strata.schemes <- Msat.Ei.strata[, c("Population","LABID")]#note-here you can have additional columns, and then this makes it easy to switch between strata levels below
 rownames(strata.schemes) <- Msat.Ei.strata$LABID
@@ -53,7 +53,7 @@ library(plyr)
 
 #--- create a diploid gtypes object####
 Msat.g <- new("gtypes", gen.data = Msat.Ei.geno.a[, -1], ploidy = 2,
-                     ind.names = Msat.Ei.geno.a[, 1], schemes = strata.schemes, strata="Population")
+              ind.names = Msat.Ei.geno.a[, 1], schemes = strata.schemes, strata="Population")
 summary(Msat.g) #this gives a quick summary
 save(Msat.g, file = paste(description, "_gtypes.rdata", sep=""))
 
@@ -97,7 +97,7 @@ for(g in strataSplit(Msat.g)) {
   fname <- paste(description,"_HWE_ ", strataNames(g)[1], ".csv", sep = "")
   write.csv(result, fname)
 }# or use this if want to run and bind multiple things together that have the same dimensions
-  
+
 
 #Allele Frequencies:
 z<-alleleFreqs(Msat.g, by.strata = FALSE)# list of allele frequencies for each locus. Each element is a matrix or array with 
@@ -109,7 +109,7 @@ write.csv(z$ERIM04t, file = paste(description, "_ERIM04t_alleleFreq.csv", sep = 
 
 #this jackknifes n samples at a time (set to 1) to see how affects HWE 
 Msat.Ei.JackHWE<-jackHWE(Msat.g, exclude.num = 1, min.hwe.samples = 3, show.progress = TRUE,
-        use.genepop = TRUE)#performs a HWE jackknife where all combinations of exclude.num samples are left out and HWE is recalculated
+                         use.genepop = TRUE)#performs a HWE jackknife where all combinations of exclude.num samples are left out and HWE is recalculated
 Msat.Ei.JackHWE.influential<-jackInfluential(Msat.Ei.JackHWE, alpha = 0.05)
 Msat.Ei.JackHWE.influential #HWE and identifies "influential" samples. Samples are "influential" if the observed HWE p-value is < alpha, but is > alpha when the samples are not present.
 write.csv(Msat.Ei.JackHWE.influential$influential, file = paste(description, "_JackHWE.influential.csv", sep = ""))
@@ -134,7 +134,7 @@ write.csv(overall.1$result, file = paste(description, "_overall_test.csv", sep =
 
 # Run just pairwise tests for specified metrics####
 pairwise.1 <- pairwiseTest(Msat.g, stats = c("fst", "fst.prime","gst.dbl.prime"),
-                            nrep = 10000, write.output=TRUE) #set nrep = 10000 after testing at <100
+                           nrep = 10000, write.output=TRUE) #set nrep = 10000 after testing at <100
 write.csv(pairwise.1$result, file = paste(description, "_pairwise_results.csv", sep = ""))
 warnings()
 #Can save to file Warning messages about dropped loci to remember if applicable
@@ -158,4 +158,4 @@ ggplot(data = data, aes(x = locus, y = mean.heterozygosity)) + geom_point(size=4
 dev.off()
 
 #add more plots as desired for other metrics later-See Peter's request of by allele drawn on board
-#Run STRUCTURE:#### see other script, add in as needed here.
+#Run STRUCTURE:#### see other script, add in as needed here. 
