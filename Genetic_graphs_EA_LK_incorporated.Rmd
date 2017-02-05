@@ -33,7 +33,7 @@ library(tidyr)
 ####1. Haplotype Allelic Frequency Bar Charts
 
 First, let's generate data to play with:
-```{r haplo_freq, echo=T}
+```{r haplo_freq, echo=T, include=T}
 # example data
 set.seed(8) #set the seed number for the random number generator so results are reproducible
 df <- data.frame(
@@ -46,14 +46,14 @@ df <- data.frame(
 (Obviously, here you can also load your real data here to use)  
 
 Then we can check the structure and summary of our data to make sure it is what we want:  
-```{r haplo_str, echo=T}
+```{r haplo_str, echo=T, include=T}
 str(df) #examine structure of dataframe
 summary(df) #summary stats of dataframe
 head(df)#first five rows of dataframe
 ```
 
 Once we've checked that our data is ok, we transform into a gtypes object. This makes it compatible with analyses in StrataG.  
-```{r haplo_gtpyes, echo=T}
+```{r haplo_gtpyes, echo=T, include=T}
 df.g <- df2gtypes(df, ploidy = 1) # make gtypes object for haplotypic data (the 'ploidy' part-so if you have diploid data, would be ploidy=2)
 ```
 Alternatively, if you already have been doing StrataG analyses, you would skip steps above, and just use your already existing gtypes object.
@@ -240,7 +240,7 @@ When we have multiple loci with many alleles (e.g., microsatellites), it can be 
 
 1. Using raw data in the same style of input data as you would have prepared for StrataG analyses  
 2. Data already in a gtypes object-using data one of the vignettes from the StrataG package  
-```{r MSat_AlleleFreq, echo=T}
+```{r MSat_AlleleFreq, echo=T, include=T}
 #Option 1: Data already in gtypes object:
 data(msats.g)#dolphin msat data from StrataG vignette 
 msat.freqs <- alleleFreqs(msats.g, by.strata = TRUE)
@@ -293,7 +293,7 @@ print(hist2)
 Here we are using summary data that would be generated from programs external to R (so not integrated with StrataG); although there may be increasing use of R packages for MSA, so at a later date I may come back and integrate data structure. For now, we'll read in summary data to generate the plots.
 
 So again let's first start with a simple example.
-```{r mixed_stock, echo = T}
+```{r mixed_stock, echo = T, include=T}
 MSA<-read.csv("PGdata/MSA_Ccar.csv")
 str(MSA)
 bar1<-ggplot(MSA, 
@@ -326,7 +326,7 @@ print(bar2) #change colors, legend positioning etc as desired...
 ```
 
 Now make your own, slightly more complex MSA plot  
-```{r MJanalysis, echo=TRUE}
+```{r MJanalysis, echo=TRUE,  include=T}
 MJ<-read.csv("PGdata/MJ_models_combined.csv", header=TRUE)
 str(MJ)
 
