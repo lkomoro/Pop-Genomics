@@ -160,6 +160,8 @@ for (i in 1:length(dataset$n))
 dataset.expanded$id <- 1:nrow(dataset.expanded)#just adding a dummy sample ID column since strataG needs that
 mtdna.expanded<-dataset.expanded [,c(4,1:2)] #now each row is an observation
 df.realg <- df2gtypes(mtdna.expanded, ploidy = 1) #make gtypes object
+
+#Note: strataG function 'freq2GenData()' might also work here? come back and check
 ```
 
 ####Make stacked bar charts:  
