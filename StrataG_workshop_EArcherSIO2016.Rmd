@@ -124,7 +124,9 @@ R Techniques that you need to be able to do to use these scripts/packages
 
 -if you have an idea (bug, suggestion, etc.), please create an issue on Eric's github so can keep track/record keeping  
 
-###Workshop Vignettes:  
+##Workshop Vignettes:  
+
+###Part I: Creating gtypes objects, manipulating data forms, etc.  
 ```{r help_and_Vignettes, include=TRUE}
 #help(package="strataG")
 #example("allelicRichness")#look at the example datasets-when you run, then that data will be made available to you
@@ -259,4 +261,52 @@ example("freq2GenData")
 freq.g<-df2gtypes(gen.data,ploidy=1)
 long<-freq2GenData(hap.freqs,hap.col=1, freq.col=2, id.label = NULL, hap.label = NULL)
 long
+```
+
+##Part II: Population Structure Analyses in StrataG
+*some basic pop structure tests/QAQC code, N.B. See other .rmd with extended scripts for this-LK come back and cross check code etc.*
+```{r Pop structure, include=TRUE}
+#create summaries of gtypes objects
+smry <- summary(msats.g)
+smry$locus.smry#look at just locus summaries this way
+summarizeLoci(msats.g)# or this function does the same thing
+
+#summarize loci by strata
+summarizeLoci(msats.g, by.strata = T)
+
+# allele frequencies
+af <- alleleFreqs(msats.g)
+# ... by strata
+af.strata <- alleleFreqs(msats.g, by.strata = T)
+
+# private alleles
+privateAlleles(msats.g)
+
+# proportion unique alleles
+propUniqueAlleles(msats.g)
+
+# split the strata
+split.msats <- strataSplit(msats.g)
+
+for(g in split.msats) print(nInd(g))
+
+# proportion unique in each stratum
+for(g in split.msats) print(propUniqueAlleles(g))
+
+unqu.all <- sapply(split.msats, propUniqueAlleles)
+unqu.all
+
+# Fst
+statFst(msats.g)
+statFst(msats.g, nrep = 1000)
+statChi2(msats.g, nrep = 1000)
+
+ovl <- overallTest(msats.g, stats = c("fst", "chi2", "gst"))
+
+pws <- pairwiseTest(msats.g, stats = "fst.prime")
+
+all.stats <- popStructTest(msats.g)
+
+#QAQC basic tests
+x <- qaqc(msats.g)
 ```
