@@ -1,0 +1,272 @@
+---
+title: "Eric’s StrataG presentation and workshop"
+author: "Lisa Komoroske"
+date: "May 3, 2016"
+output: word_document
+---
+-Intro from Eric:
+2015 R Hackaton-goal was to bring together the different pop gen developers to see how they could integrate/make things compatible/make community resources, etc.
+
+StrataG: Essentially think about it like a Population genetics toolkit
+Can handle haploid and diploid data
+
+-Make genetic summaries
+
+-QA/QC analyses and reports
+
+-Standard Population structure tests
+
+-Test multiple stratification schemes
+
+-Wrapper for external programs 
+
+```{r lib_load, include=TRUE}
+library(strataG)
+```
+
+Input data:
+-genetic data
+-sample IDs
+-stratification (alternate schemes, hierarchy)
+-Auxiliary data (sex, location, etc.)
+-Labels
+
+So what format?
+-Custom class (S4) is best (see presentation for details why)
+-So Eric created 'gtypes' objects that are S4 class
+-has slots for:
+loci
+ploidy
+strata
+schemes
+sequences
+description
+other
+
+-You can populate the gtypes objects from:
+1. a matrix/data.frame of genotypes/haplotypes
+2. sequences(FASTA, etc.)
+3. data stored as...missed this, check
+
+-Ok, so how do we manipulate? 
+1. with Accessor Functions
+e.g., nInd, nLoc, nStrata, indNames,locNames, strataNames, loci, strata, sequences
+2. Indexing
+-g[id, loci, strata]-really handy for looping code
+-numeric, character, logical
+3. Modifying
+-change the stratifications schemes, etc.
+strata(g)<-
+schemes(g)<-
+stratify(g,scheme)
+  -so can have broad or fine stratification, if don't want sample included can leave as NA
+  
+Idea is to have modularity-simple core functions with consistent output
+by locus metrics output as vectors
+pairwise metrics output as data.frames
+
+and then some convenience functions
+by locus summaries
+qa/qc wrapper
+
+Performance
+-trade off between efficient code vs. easy code
+-profiling
+-multi-threading-when possible, tried to incoporate into functions where think it could get large/complex enough that one would want to put on a cluster etc.
+-some of it needs to be written in C that R then calls (or else just gets really slow, etc.)
+
+-Population subdivision tests
+multiple metrics (coded in C)
+tests can be global or pairwise
+permutation based-running same test multiple times
+
+so you have your gtypes object, and if you run an overalltest(), it will run it for each of the different metrics
+if you have your gtypes object and you want to do pairwise tests, it will run the overalltest() for each pair, and for each metric
+output then is for each comparison and summary files
+for each, there are options for nreps, etc.
+if you run something that is not appropriate, will return Gst
+
+-Also has conversion functions to export data/results in formats that are useful for other programs
+
+-Also calls several external programs to be compatible
+e.g., adegenet()->running dapc, and then scatterplot
+structure/clummp, etc.
+
+So now is in Validation stage
+-need standarized datasets for people (developers) to test with their different packages, etc.
+-testing how it deals with different types of missing data
+-checking modularity
+-need to do more formalized tests, is what Eric is doing now (or planning to do)
+
+Resources
+Help files (examples, references)
+Vignettes
+
+need to (or hope to) add tutorials, manuals, more web resources
+
+R Techniques that you need to be able to do to use these scripts/packages
+-reading/writing .csv
+-loading/saving R binary files (.rdata)
+-indexing...
+-being able to work with data.frames, matrices, lists, vectors
+-using sapply, lapply, apply
+-for loops
+
+**There's a whole world of packages, resources-look at his summary slide**
+***Look up TaskViews for: (he has the websites listed)
+1.Statistical Genetics
+2. Phylogenetics, Especially Comparative Methods
+
+-mailing lists...
+
+-if you have an idea (bug, suggestion, etc.), please create an issue on Eric's github so can keep track/record keeping
+
+*look up ReadGen to matrix conversion-this would be what we'd want to do for getting into TidyR, reshape2, etc. See function: 'as.matrix.gtypes' in strataG
+
+Ok, now working through some vignettes in workshop
+
+```{r help_and_Vignettes, include=TRUE}
+#help(package="strataG")
+#example("allelicRichness")#look at the example datasets-when you run, then that data will be made available to you
+#browseVignettes(package="strataG")#look at the vignettes available (need internet connection)
+#vignette(package="strataG")
+#vignette("gtypes")
+```
+
+Ok let's load some data to play with:
+```{r example_data, include=TRUE}
+rm(list=ls())
+data(dolph.msats)
+data(dolph.strata)
+dolph.strata$Offshore<-dolph.strata$broad
+dolph.strata$Offshore[dolph.strata$Offshore=="Coastal"]<-NA#so now the coastal ones will be excluded if you use this strata
+tail(dolph.strata)
+```
+
+We've got our data in, and now need to make a gtypes object, which is our 'container' for the info we want for our data and corresponding data (location, sex, etc.-that would be used for strata, etc)
+```{r gtypes_msat, include=TRUE}
+d.msats<-new("gtypes",gen.data=dolph.msats[,-1], ploidy=2,ind.names=dolph.msats[,1],schemes=dolph.strata, description="Dolph_msat_050216_")
+d.msats
+```
+***Impt to note the genetic data has to come last. It assumes that anything after where you tell it your loci start is genetic data***
+
+Can also do a df (dataframe) to gtypes function, especially useful if you only have one strata:
+```{r df_gtypes, include=TRUE}
+?df2gtypes#help file for this function
+d.msats2<-df2gtypes(dolph.msats, ploidy=2, id.col = 1, strata.col = NULL, loc.col = 2)
+d.msats2
+#if you don't have more than one strata column, then don't need a strata scheme, can just read in with one strata and use merge
+strat.msats<-merge(dolph.strata[,c("id","fine")],dolph.msats,by="id",all.y=T)
+d.msats3<-df2gtypes(strat.msats,ploidy=2)
+#so if you only have one strata, can just use the df to gtypes to make your gtype object
+```
+Note also that when you create the gtypes object, you don't need to stratify right away, can do that later if desired
+
+
+Ok, now let's look at some haploid data:
+```{r haploid_dataload, include=TRUE}
+#haploid data
+d.dloop<-df2gtypes(dolph.strata[,c(1,4,2)],ploidy=1)
+head(dolph.strata[,c(1,4,2)])
+#note that you can have multiple locations here too with haploid data (e.g., if you have control region and cyt b, or if you have mitogenomic data and you have one entry for each genetic region-assigned haplotype IDs)
+str(dolph.seqs)
+#But our gtypes object has haplotype identifiers, and it needs to be able to match them. So, need to use dolph.haps, instead of dolph.seqs
+dloops.haps<-df2gtypes(dolph.strata[,c(1,4,2)],ploidy=1,sequences=dolph.haps,description="haplotypes")
+dloops.haps
+```
+Above, is for when you have your haplotypes defined
+But you may also just have the sequences themselves. If you use the sequences, it will use the IDs and think they are all different haplotypes.
+
+```{r haploid_dataload2, include=TRUE}
+dloop.seqs<-df2gtypes(dolph.strata[,c(1,4,1)],ploidy=1,sequences=dolph.seqs,description="ids")
+dloop.seqs#see how it thinks each individual is a different haplotype in the calculations?
+```
+So, you need to convert to haplotypes first, else it's wrong
+```{r haploid_dataload3, include=TRUE}
+?labelHaplotypes
+x<-labelHaplotypes(as.DNAbin(dolph.seqs), prefix = "Ttru", use.indels = FALSE)#the prefix puts that in front of all the numbers it assigns to the haplotypes
+str(x)
+x$haps#what's the frequency of your different haplotypes?
+table(x$haps)#put in nice table format
+
+new.haps<-labelHaplotypes(dloop.seqs,prefix = "Ttru")$gtypes #this is a shortcut that takes your gtype object and runs the labeling for the haplotypes and attaches it into a new gtypes object
+```
+
+Ok, so lastly you have just sequences, no stratification
+Make a gtypes object from sequences only
+```{r haploid_dataload4, include=TRUE}
+?sequence2gtypes
+seq.g<-sequence2gtypes(dolph.seqs)
+#can go back and add stratification; it assumes it's haploid so don't need to specify ploidy.
+```
+
+Ok, so now we have our gtypes object, how do we get stuff out of it?
+```{r accessors, include=TRUE}
+?accessors#these are functions that access information about the object
+#E.g.,:
+nInd(seq.g)
+indNames(seq.g)
+nStrata(seq.g)
+```
+
+So now we may want to assign schemes (since we didn't before for this gtypes object)
+```{r assign_schemes, include=TRUE}
+#add schemes
+schemes(seq.g)<-dolph.strata
+#stratify to fine
+fine.seq<-stratify(seq.g, "fine")
+fine.seq
+off.seq<-stratify(seq.g,"Offshore",drop=TRUE)#if you don's specify drop=FALSE, default is true, so any with NAs are gone from this gtypes object, can't be brought back (need to go back to earlier gtypes object that was brought in for this)
+off.seq
+#indexing
+msats.g[1:5,,]
+#Helps to know R's way of indexing:
+msats.g[c(T,F),,]#this is a shortcut that is assigning T or F to every other, and then makes it easy to return every other one
+#so if you had M/F or other info you could parse
+sex<-sample(c("M","F"),nInd(msats.g),rep=T)
+f.msats<-msats.g[sex==
+                   "F",,]
+table(sex)
+#the third way to index is if you want to do by naming the samples/loci, etc. that you want.
+#can get this info from your accessors
+indNames(msats.g)
+id.msats<-msats.g[c("4495" , "4496",  "4498" , "5814" , "5815",  "5816")]
+#and what if you want certain individuals for certain loci?
+locNames(msats.g)
+id.msats<-msats.g[c("4495" , "4496",  "4498" , "5814" , "5815"),c("D11t" , "EV37" , "EV94")]
+```
+
+Finally, we want to export to matrix
+```{r matrix, include=TRUE}
+#export to matrix
+
+write.csv(msats.mat.df,file="msats.g.csv", row.names=F)
+```
+
+Read in Data
+```{r read_inData, include=TRUE}
+gen.data<-readGenData("msats.g.csv")
+```
+
+Frequencies to GenData
+```{r freq_toGen, include=TRUE}
+?freq2GenData
+example("freq2GenData")
+freq.g<-df2gtypes(gen.data,ploidy=1)
+long<-freq2GenData(hap.freqs,hap.col=1, freq.col=2, id.label = NULL, hap.label = NULL)
+long
+```
+
+Let's see if that works now for our graph/data manipulation for graphing
+```{r data_manipulation, include=TRUE}
+#lisa come back to and fix/see if can get to works
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+msats.mat.df<-msats.mat.df[,c(12,2:11)]#just moving columns around how I want them
+head(msats.mat.df)
+msat_long<-gather(msats.mat.df,"locus","allele_ID",2:11)
+head(msat_long)
+str(msat_long)
+#not sure if totally worked-go back and tweak as needed
+```
