@@ -4,7 +4,7 @@ author: "Lisa Komoroske"
 date: "May 3, 2016"
 output: word_document
 ---
-##Intro from Eric:  
+## Intro from Eric:  
 2015 R Hackaton-goal was to bring together the different pop gen developers to see how they could integrate/make things compatible/make community resources, etc.  
 
 StrataG: Essentially think about it like a Population genetics toolkit
@@ -24,14 +24,14 @@ Can handle haploid and diploid data
 library(strataG)
 ```
 
-####Input data:  
+#### Input data:  
 -genetic data  
 -sample IDs  
 -stratification (alternate schemes, hierarchy)  
 -Auxiliary data (sex, location, etc.)  
 -Labels  
 
-####So what format?
+#### So what format?
 -Custom class (S4) is best (see presentation for details why)  
 -So Eric created 'gtypes' objects that are S4 class in StrataG  
 -Has slots for:  
@@ -43,12 +43,12 @@ sequences
 description  
 other  
 
-####You can populate the gtypes objects from:  
+#### You can populate the gtypes objects from:  
 1. a matrix/data.frame of genotypes/haplotypes  
 2. sequences(FASTA, etc.)  
 3. data stored as objects, etc.  
 
-####Ok, so how do we manipulate?   
+#### Ok, so how do we manipulate?   
 1. with Accessor Functions
 *e.g., nInd, nLoc, nStrata, indNames,locNames, strataNames, loci, strata, sequences*  
 2. Indexing
@@ -70,13 +70,13 @@ and then some convenience functions
 -by locus summaries  
 -qa/qc wrapper  
 
-####Performance
+#### Performance
 -trade off between efficient code vs. easy code  
 -profiling  
 -multi-threading-when possible, tried to incoporate into functions where think it could get large/complex enough that one would want to put on a cluster etc.  
 -some of it needs to be written in C that R then calls (or else just gets really slow, etc.)  
 
-####Population subdivision tests  
+#### Population subdivision tests  
 -multiple metrics (coded in C)  
 -tests can be global or pairwise  
 -permutation based-running same test multiple times  
@@ -95,13 +95,13 @@ Output then is for each comparison and summary files
 e.g., adegenet()->running dapc, and then scatterplot  
 structure/clummp, etc.  
 
-####So now is in Validation stage  
+#### So now is in Validation stage  
 -need standarized datasets for people (developers) to test with their different packages, etc.  
 -testing how it deals with different types of missing data  
 -checking modularity  
 -need to do more formalized tests, is what Eric is doing now (or planning to do)  
 
-####Resources
+#### Resources
 Help files (examples, references)  
 Vignettes  
 
@@ -124,9 +124,9 @@ R Techniques that you need to be able to do to use these scripts/packages
 
 -if you have an idea (bug, suggestion, etc.), please create an issue on Eric's github so can keep track/record keeping  
 
-##Workshop Vignettes:  
+## Workshop Vignettes:  
 
-###Part I: Creating gtypes objects, manipulating data forms, etc.  
+### Part I: Creating gtypes objects, manipulating data forms, etc.  
 ```{r help_and_Vignettes, include=TRUE}
 #help(package="strataG")
 #example("allelicRichness")#look at the example datasets-when you run, then that data will be made available to you
@@ -135,7 +135,7 @@ R Techniques that you need to be able to do to use these scripts/packages
 #vignette("gtypes")
 ```
 
-####Load some data to play with:
+#### Load some data to play with:
 ```{r example_data, include=TRUE}
 rm(list=ls())
 data(dolph.msats)
@@ -263,7 +263,7 @@ long<-freq2GenData(hap.freqs,hap.col=1, freq.col=2, id.label = NULL, hap.label =
 long
 ```
 
-##Part II: Population Structure Analyses in StrataG
+## Part II: Population Structure Analyses in StrataG
 *some basic pop structure tests/QAQC code, N.B. See other .rmd with extended scripts for this-LK come back and cross check code etc.*
 ```{r Pop structure, include=TRUE}
 #create summaries of gtypes objects
