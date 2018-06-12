@@ -1,7 +1,7 @@
 # Pop-Genomics
 Scripts and Notes for Pop Genomics Analyses
 
-###Additional Resources:  
+### Additional Resources:  
 
 [Nice tutorial on ggtree, an R package for making a variety of phylogenentic trees][1]  
 
